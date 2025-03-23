@@ -1,5 +1,7 @@
 """
 Author: Matheus Cardoso da Silva
+
+This file contains custom modules
 """
 
 # Functions to calculate dissolved oxygen saturation (uses air temperature)
