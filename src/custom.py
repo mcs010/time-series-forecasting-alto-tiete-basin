@@ -167,3 +167,24 @@ def q_i_dissolved_oxigen_saturation_percentage(do, temperature, code_point):
     return 3+2.9*do_percentage-0.02496*math.pow(do_percentage, 2)+5.60919*0.00001*math.pow(do_percentage, 3)
   elif(do_percentage>140):
     return 3+47
+  
+# Load time series of multiple lengths and exogenous variables
+# ==============================================================================
+
+def get_series(data, ponto_str):
+    """
+    Receives a dataframe and the category string
+    Returns the series dataframe (datetime index column + target feature column)
+    """
+    df_ponto = data[data['Código Ponto'] == ponto_str]
+    df_series = df_ponto[["Código Ponto", "Data Coleta", "WQI"]].copy()
+    return df_series
+
+def get_exog(data, ponto_str):
+    """
+    Receives the dataframe grouped by series (category) and the series string
+    Return the dataframe with exogenous variables values
+    """
+    df_ponto = data[data['Código Ponto'] == ponto_str]
+    df_exog = df_ponto[["Código Ponto", "Data Coleta", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9"]].copy()
+    return df_exog
