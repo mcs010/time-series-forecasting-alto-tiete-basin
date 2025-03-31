@@ -4,6 +4,7 @@ Author: Matheus Cardoso da Silva
 This file contains custom modules
 """
 import math
+import pandas as pd
 
 # Functions to calculate dissolved oxygen saturation (uses air temperature)
 
@@ -188,3 +189,31 @@ def get_exog(data, ponto_str):
     df_ponto = data[data['Código Ponto'] == ponto_str]
     df_exog = df_ponto[["Código Ponto", "Data Coleta", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9"]].copy()
     return df_exog
+
+def converte_df(df_ponto):
+    """
+    Receives the category string
+    Returns a dataframe for that category, transforming de datetime index column to the 
+    """
+    codigo_ponto = df_ponto["Código Ponto"].iloc[0]
+    df_ponto['Data Coleta'] = pd.to_datetime(df_ponto['Data Coleta'])
+    df_ponto['Data Coleta'] = df_ponto['Data Coleta'].apply(lambda x: x.strftime('%Y-%m-01 00:00:00'))
+    df_ponto_freq = df_ponto.set_index(pd.DatetimeIndex(df_ponto['Data Coleta']))
+    df_ponto_freq = df_ponto_freq.asfreq("2MS")
+    df_ponto_freq.drop('Data Coleta', axis=1, inplace=True)
+    df_ponto_freq['Código Ponto'] = codigo_ponto
+    return df_ponto_freq
+
+def concat_all_dfs(pontos, lista_freq):
+  """
+  Concat all series dataframes
+  Receives the category strings list and the dataframe for each category
+  Returns the concatenated dataframe with each category
+  """  
+  full_df = None
+  for ponto_str in pontos:
+      if full_df is None:
+          full_df = lista_freq[ponto_str]
+      else:
+          full_df = pd.concat([full_df, lista_freq[ponto_str]], axis=0)
+  return full_df
