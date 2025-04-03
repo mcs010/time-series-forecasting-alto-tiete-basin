@@ -14,17 +14,21 @@ from skforecast.preprocessing import RollingFeatures
 from skforecast.recursive import ForecasterRecursiveMultiSeries
 from skforecast.model_selection import TimeSeriesFold
 from skforecast.model_selection import backtesting_forecaster_multiseries
-from skforecast.model_selection import bayesian_search_forecaster_multiseries
-
+from skforecast.model_selection import bayesian_search_forecaster_multiseries, grid_search_forecaster_multiseries
 from sklearn.metrics import r2_score
 
+lags_grid = [[1], [6], [12], [18]]
+param_grid = {
+    'n_estimators': [10, 20, 100], # 100 default, [50, 100, 200] geeksforgeeks
+    'learning_rate': [0.01, 0.1, 0.2], # geeksforgeeks
+    'max_depth': [-1, 3, 5, 7] # -1 default
+}
+
 #%%
-def train_model(algorithm, features_list, number_of_features, lags, steps, series_dict_train, exog_dict_train, seed):
+def train_predict_model(algorithm, features_list, number_of_features, lags, steps, series_dict, series_dict_train, exog_dict, exog_dict_train, seed):
     """
     Training model
     """
-
-    features = features_list[:number_of_features]
 
     if algorithm == "LGBM":
         regressor = LGBMRegressor(random_state=seed, verbose=-1, max_depth=5)
@@ -42,7 +46,9 @@ def train_model(algorithm, features_list, number_of_features, lags, steps, serie
     
     forecaster.fit(series=series_dict_train, exog=exog_dict_train, suppress_warnings=True)
 
-    return forecaster
+    metrics_levels, backtest_predictions = predict(forecaster, features_list, number_of_features, lags, steps, series_dict_train, series_dict, exog_dict, seed)
+
+    return metrics_levels, backtest_predictions
 
 #%%
 def predict(forecaster, features_list, number_of_features, lags, steps, series_dict_train, series_dict, exog_dict, seed):
@@ -75,3 +81,47 @@ def predict(forecaster, features_list, number_of_features, lags, steps, series_d
         show_progress         = True,
         suppress_warnings     = True
     )
+
+    return metrics_levels, backtest_predictions
+
+#%%
+def tunning_predict(algorithm, features_list, number_of_features, steps, series_dict_train, series_dict, exog_dict, seed):
+
+    if algorithm == "LGBM":
+        regressor = LGBMRegressor(random_state=seed, verbose=-1)
+    elif algorithm == "ExtraTrees":
+        regressor = ExtraTreesRegressor(random_state=seed)
+    elif algorithm == "RF":
+        regressor = RandomForestRegressor(random_state=seed)
+
+    forecaster = ForecasterRecursiveMultiSeries(
+                    regressor = regressor,
+                    lags      = 24, # Just a placeholder, it will be replaced in grid search
+                    encoding  = 'ordinal'
+                )
+
+    cv = TimeSeriesFold(
+         steps                 = steps,
+         initial_train_size    = len(series_dict_train["EMMI02900"]),
+         refit                 = True,
+         fixed_train_size      = True
+     )
+    
+    results = grid_search_forecaster_multiseries(
+              forecaster         = forecaster,
+              series             = series_dict,
+              exog               = exog_dict,
+              lags_grid          = lags_grid,
+              param_grid         = param_grid,
+              cv                 = cv,
+              levels             = None,
+              metric             = r2_score,
+              aggregate_metric   = ['weighted_average', 'average', 'pooling'],
+              return_best        = False,
+              n_jobs             = 'auto',
+              verbose            = False,
+              show_progress      = True
+          )
+    
+    return results
+    
