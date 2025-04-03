@@ -17,6 +17,9 @@ from skforecast.model_selection import backtesting_forecaster_multiseries
 from skforecast.model_selection import bayesian_search_forecaster_multiseries
 
 from custom import get_series, get_exog, converte_df, concat_all_dfs
+from model import train_predict_model, tunning_predict
+
+seed = 120
 
 #%%
 # Load all data
@@ -60,7 +63,7 @@ full_df = pd.concat([full_exog_df, full_series_df['WQI']], axis=1)
 full_df.drop(full_df.columns[[10]], axis=1, inplace=True)
 #full_df["Data Coleta"] = pd.to_datetime(full_df["Data Coleta"], format="%d/%m/%Y")
 full_export_df = full_df.sort_values("Data Coleta")
-full_export_df.to_excel("../output/full_df.xlsx")
+#full_export_df.to_excel("../output/full_df.xlsx")
 
 #%%:
 
@@ -128,5 +131,15 @@ for k in series_dict.keys():
         print(f"\t{exog_dict[k].columns.to_list()}")
     except:
         print("\tNo exogenous variables")
+
+#%%
+results, backtest_predictions = train_predict_model("LGBM", "", "", 6, 6, series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
+
+print(type(results))
+
+#%%
+results = tunning_predict("LGBM", "", "", 6, series_dict_train, series_dict, exog_dict, seed)
+
+print(type(results))
 
 #%%
