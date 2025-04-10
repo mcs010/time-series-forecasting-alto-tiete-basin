@@ -16,8 +16,11 @@ from skforecast.model_selection import TimeSeriesFold
 from skforecast.model_selection import backtesting_forecaster_multiseries
 from skforecast.model_selection import bayesian_search_forecaster_multiseries
 
-from custom import get_series, get_exog, converte_df, concat_all_dfs
+from custom import get_series, get_exog, converte_df, concat_all_dfs, create_folder
 from model import train_predict_model, tunning_predict
+
+from datetime import date, datetime
+import pathlib
 
 seed = 120
 
@@ -133,13 +136,19 @@ for k in series_dict.keys():
         print("\tNo exogenous variables")
 
 #%%
-results, backtest_predictions = train_predict_model("LGBM", "", "", 6, 6, series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
+results, backtest_predictions = train_predict_model("LGBM", "", "", 12, 6, series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
 
-print(type(results))
+print(results)
+
+pd.DataFrame.to_csv(f"reports/files")
 
 #%%
 results = tunning_predict("LGBM", "", "", 6, series_dict_train, series_dict, exog_dict, seed)
 
-print(type(results))
+print(results)
 
+create_folder(datetime.now())
 #%%
+
+
+# %%

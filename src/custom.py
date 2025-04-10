@@ -5,6 +5,7 @@ This file contains custom modules
 """
 import math
 import pandas as pd
+import pathlib
 
 # Functions to calculate dissolved oxygen saturation (uses air temperature)
 
@@ -217,3 +218,14 @@ def concat_all_dfs(pontos, lista_freq):
       else:
           full_df = pd.concat([full_df, lista_freq[ponto_str]], axis=0)
   return full_df
+
+def create_folder(new_folder_name):
+  try:
+    new_dir = pathlib.Path("./reports/files/", new_folder_name)
+    new_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"New directory created with name {new_folder_name}")
+  
+  except Exception as error:
+    print("It wasn't possible to create the directory")
+    print(f"Reason: {error}")
