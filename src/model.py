@@ -25,32 +25,6 @@ param_grid = {
 }
 
 #%%
-def train_predict_model(algorithm, features_list, number_of_features, lags, steps, series_dict, series_dict_train, exog_dict, exog_dict_train, seed):
-    """
-    Training model
-    """
-
-    if algorithm == "LGBM":
-        regressor = LGBMRegressor(random_state=seed, verbose=-1, max_depth=5)
-    elif algorithm == "ExtraTrees":
-        regressor = ExtraTreesRegressor(random_state=seed)
-    elif algorithm == "RF":
-        regressor = RandomForestRegressor(random_state=seed)
-
-    forecaster = ForecasterRecursiveMultiSeries(
-                    regressor          = regressor, 
-                    lags               = lags, 
-                    encoding           = "ordinal", 
-                    dropna_from_series = False
-                )
-    
-    forecaster.fit(series=series_dict_train, exog=exog_dict_train, suppress_warnings=True)
-
-    metrics_levels, backtest_predictions = predict(forecaster, features_list, number_of_features, lags, steps, series_dict_train, series_dict, exog_dict, seed)
-
-    return metrics_levels, backtest_predictions
-
-#%%
 def predict(forecaster, features_list, number_of_features, lags, steps, series_dict_train, series_dict, exog_dict, seed):
 
     cv = TimeSeriesFold(
@@ -83,9 +57,34 @@ def predict(forecaster, features_list, number_of_features, lags, steps, series_d
     )
 
     return metrics_levels, backtest_predictions
+#%%
+def train_predict_model(algorithm, features_list, number_of_features, lags, steps, series_dict, series_dict_train, exog_dict, exog_dict_train, seed):
+    """
+    Training model
+    """
+
+    if algorithm == "LGBM":
+        regressor = LGBMRegressor(random_state=seed, verbose=-1, max_depth=5)
+    elif algorithm == "ExtraTrees":
+        regressor = ExtraTreesRegressor(random_state=seed)
+    elif algorithm == "RF":
+        regressor = RandomForestRegressor(random_state=seed)
+
+    forecaster = ForecasterRecursiveMultiSeries(
+                    regressor          = regressor, 
+                    lags               = lags, 
+                    encoding           = "ordinal", 
+                    dropna_from_series = False
+                )
+    
+    forecaster.fit(series=series_dict_train, exog=exog_dict_train, suppress_warnings=True)
+
+    metrics_levels, backtest_predictions = predict(forecaster, features_list, number_of_features, lags, steps, series_dict_train, series_dict, exog_dict, seed)
+
+    return metrics_levels, backtest_predictions
 
 #%%
-def tunning_predict(algorithm, features_list, number_of_features, steps, series_dict_train, series_dict, exog_dict, seed):
+def tunning_predict(algorithm, features_list, number_of_features, steps, series_dict_train, series_dict, exog_dict, seed, actual_datetime):
 
     if algorithm == "LGBM":
         regressor = LGBMRegressor(random_state=seed, verbose=-1)
@@ -116,11 +115,12 @@ def tunning_predict(algorithm, features_list, number_of_features, steps, series_
               cv                 = cv,
               levels             = None,
               metric             = r2_score,
-              aggregate_metric   = ['weighted_average', 'average', 'pooling'],
-              return_best        = False,
+              aggregate_metric   = ['weighted_average', 'average'],
+              return_best        = True,
               n_jobs             = 'auto',
               verbose            = False,
               show_progress      = True
+              #output_file = f"../reports/files/{actual_datetime}/tunning_{algorithm}_{steps}.xlsx"
           )
     
     return results
