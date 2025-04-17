@@ -13,11 +13,12 @@ from skforecast.preprocessing import exog_long_to_dict
 from skforecast.preprocessing import RollingFeatures
 from skforecast.recursive import ForecasterRecursiveMultiSeries
 from skforecast.model_selection import TimeSeriesFold
-from skforecast.model_selection import backtesting_forecaster_multiseries
-from skforecast.model_selection import bayesian_search_forecaster_multiseries
+#from skforecast.model_selection import backtesting_forecaster_multiseries
+#from skforecast.model_selection import bayesian_search_forecaster_multiseries
 
 from custom import get_series, get_exog, converte_df, concat_all_dfs, create_folder
 from model import train_predict_model, tunning_predict
+from feature_selection import select_features
 
 from datetime import date, datetime
 import pathlib
@@ -136,18 +137,40 @@ for k in series_dict.keys():
         print("\tNo exogenous variables")
 
 #%%
-results, backtest_predictions = train_predict_model("LGBM", "", "", 12, 6, series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
-
-print(results)
-
-pd.DataFrame.to_csv(f"reports/files")
+# Create folder for saving results files
+actual_datetime = datetime.now()
+actual_date = date.today()
+actual_date_and_time = f"{actual_date}_{actual_datetime.hour}-{actual_datetime.minute}-{actual_datetime.second}"
+create_folder(actual_date_and_time)
 
 #%%
-results = tunning_predict("LGBM", "", "", 6, series_dict_train, series_dict, exog_dict, seed)
+# Setting global variables for feature selection, training and prediction
+algorithm = "LGBM"
+lags = 12
+steps = 6
+n_features = 9
+subsample = 1.0
 
-print(results)
+#%%
+# Feature selection process
+selected_exog_features = select_features(algorithm, lags, series_dict, exog_dict, subsample, seed)
+print(selected_exog_features)
+#%%
+# Running training and prediction algorithm
 
-create_folder(datetime.now())
+results, backtest_predictions = train_predict_model(algorithm, "", "", lags, steps, series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
+
+#print(results)
+results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps}_scores.xlsx")
+results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps}_predictions.xlsx")
+#%%
+# Hyperparameter Tunning with Grid Search
+#results = tunning_predict("LGBM", "", "", 6, series_dict_train, series_dict, exog_dict, seed)
+tunning_results = tunning_predict(algorithm, "", "", steps, series_dict_train, series_dict, exog_dict, seed, actual_date_and_time)
+#print(results)
+tunning_results["algorithm"] = algorithm
+tunning_results["steps"] = steps
+tunning_results.to_excel(f"../reports/files/{actual_date_and_time}/tunning_{algorithm}_{steps}.xlsx")
 #%%
 
 
