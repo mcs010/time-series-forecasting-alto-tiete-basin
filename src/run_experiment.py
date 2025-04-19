@@ -18,7 +18,7 @@ from skforecast.model_selection import TimeSeriesFold
 
 from custom import get_series, get_exog, converte_df, concat_all_dfs, create_folder
 from model import train_predict_model, tunning_predict
-from feature_selection import select_features
+from feature_selection import loop_feature_selection
 
 from datetime import date, datetime
 import pathlib
@@ -28,9 +28,9 @@ seed = 120
 #%%
 # Load all data
 # ==============================================================================
-data = pd.read_csv("../data/processed/tabela_completa.csv")
+data = pd.read_csv("../data/processed/tabela_completa.csv", sep=";")
 
-data.drop("Unnamed: 0", inplace=True, axis=1)
+#data.drop("Unnamed: 0", inplace=True, axis=1)
 
 data.head()
 
@@ -145,19 +145,17 @@ create_folder(actual_date_and_time)
 
 #%%
 # Setting global variables for feature selection, training and prediction
-algorithm = "LGBM"
-lags = 12
-steps = 6
+algorithms = ["LGBM", "ExtraTrees", "RF"]
+lags = [1, 6, 12, 18] #12
+steps = [1, 6, 12, 18] #6
 n_features = 9
 subsample = 1.0
 
 #%%
 # Feature selection process
-selected_exog_features = select_features(algorithm, lags, series_dict, exog_dict, subsample, seed)
-print(selected_exog_features)
+loop_feature_selection(algorithms, lags, series_dict, exog_dict, actual_date_and_time, subsample, seed)
 #%%
 # Running training and prediction algorithm
-
 results, backtest_predictions = train_predict_model(algorithm, "", "", lags, steps, series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
 
 #print(results)

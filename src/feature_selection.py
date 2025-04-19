@@ -7,6 +7,18 @@ from lightgbm import LGBMRegressor
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestRegressor
 
+import pandas as pd
+
+def loop_feature_selection(algorithms: list, lags: list, series_dict, exog_dict, actual_date_and_time, subsample:float, seed: int):
+    df_best_features = pd.DataFrame(columns=["algorithm", "lags", "important_features"])
+    for algorithm in algorithms:
+        for lag in lags:
+            selected_exog_features = select_features(algorithm, lag, series_dict, exog_dict, subsample, seed)
+            new_df_row = {"algorithm":algorithm, "lags":lag, "important_features":selected_exog_features}
+            df_best_features = pd.concat([df_best_features, pd.DataFrame(new_df_row)], ignore_index=True)
+
+    df_best_features
+    df_best_features.to_excel(f"../reports/files/{actual_date_and_time}/best_features.xlsx")
 #%%
 def select_features(algorithm:str, lags:int, series, exog, subsample:float, seed:int):
 
