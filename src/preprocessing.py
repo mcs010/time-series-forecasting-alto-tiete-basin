@@ -276,6 +276,10 @@ df_final
 df_final.info()
 
 #%%
-df_final.to_csv("../data/processed/tabela_completa.csv")
+# Debug and validate df_final info
+df_final.describe()
+
+#%%
+df_final.to_csv("../data/processed/tabela_completa.csv", sep=";")
 
 #%%
