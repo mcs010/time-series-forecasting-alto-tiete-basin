@@ -23,8 +23,11 @@ from feature_selection import loop_feature_selection
 from datetime import date, datetime
 import pathlib
 
-seed = 120
+seed = 10
 
+#%%
+# Marks the beginning of the experiment
+print(f"Experiment beginning")
 #%%
 # Load all data
 # ==============================================================================
@@ -156,20 +159,24 @@ subsample = 1.0
 loop_feature_selection(algorithms, lags, series_dict, exog_dict, actual_date_and_time, subsample, seed)
 #%%
 # Running training and prediction algorithm
-results, backtest_predictions = train_predict_model(algorithm, "", "", lags, steps, series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
-
-#print(results)
-results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps}_scores.xlsx")
-results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps}_predictions.xlsx")
+for algorithm in algorithms:
+    for seed_iteration in range(1, seed+1):
+        results, backtest_predictions = train_predict_model(algorithm, "", "", lags, steps[1], series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
+        df_results = pd.DataFrame(results)
+        df_results.set_index("levels").transpose()
+        #print(results)
+        df_results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps[1]}_scores.xlsx")
+        #results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps[1]}_predictions.xlsx")
 #%%
 # Hyperparameter Tunning with Grid Search
 #results = tunning_predict("LGBM", "", "", 6, series_dict_train, series_dict, exog_dict, seed)
+
 tunning_results = tunning_predict(algorithm, "", "", steps, series_dict_train, series_dict, exog_dict, seed, actual_date_and_time)
 #print(results)
 tunning_results["algorithm"] = algorithm
 tunning_results["steps"] = steps
 tunning_results.to_excel(f"../reports/files/{actual_date_and_time}/tunning_{algorithm}_{steps}.xlsx")
 #%%
-
-
+# Marks the end of the experiment
+print(f"Experiment ")
 # %%
