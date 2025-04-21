@@ -21,13 +21,19 @@ from model import train_predict_model, tunning_predict
 from feature_selection import loop_feature_selection
 
 from datetime import date, datetime
+import time
 import pathlib
 
-seed = 10
-
+seed = 10 # sets seed, mainly for feature selection
+#%%
+# Sets actual date and time values for later use
+actual_datetime = datetime.now()
+actual_date = date.today()
+actual_date_and_time = f"{actual_date}_{actual_datetime.hour}-{actual_datetime.minute}-{actual_datetime.second}"
 #%%
 # Marks the beginning of the experiment
-print(f"Experiment beginning")
+start_time = time.process_time()
+print(f"---------------- Experiment beginning at {actual_datetime} ----------------")
 #%%
 # Load all data
 # ==============================================================================
@@ -141,9 +147,6 @@ for k in series_dict.keys():
 
 #%%
 # Create folder for saving results files
-actual_datetime = datetime.now()
-actual_date = date.today()
-actual_date_and_time = f"{actual_date}_{actual_datetime.hour}-{actual_datetime.minute}-{actual_datetime.second}"
 create_folder(actual_date_and_time)
 
 #%%
@@ -160,13 +163,21 @@ loop_feature_selection(algorithms, lags, series_dict, exog_dict, actual_date_and
 #%%
 # Running training and prediction algorithm
 for algorithm in algorithms:
-    for seed_iteration in range(1, seed+1):
-        results, backtest_predictions = train_predict_model(algorithm, "", "", lags, steps[1], series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
-        df_results = pd.DataFrame(results)
-        df_results.set_index("levels").transpose()
-        #print(results)
-        df_results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps[1]}_scores.xlsx")
-        #results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps[1]}_predictions.xlsx")
+    for seed_iteration in range(1, seed+1):    
+        for lag in lags:
+            for step in steps:
+                results, backtest_predictions = train_predict_model(algorithm, "", "", lag, step, series_dict, series_dict_train, exog_dict, exog_dict_train, seed_iteration)
+                df_results = pd.DataFrame(results).set_index("levels").transpose(copy=True)
+                #df_results.set_index("levels").transpose(copy=True)
+                #print(results)
+                df_results["algorithm"] = algorithm
+                df_results["lags"] = lag
+                df_results["steps"] = step
+                df_results["number_features"] = n_features
+                df_results["seed"] = seed_iteration
+
+                df_results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_scores.xlsx")
+                #results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps[1]}_predictions.xlsx")
 #%%
 # Hyperparameter Tunning with Grid Search
 #results = tunning_predict("LGBM", "", "", 6, series_dict_train, series_dict, exog_dict, seed)
@@ -176,7 +187,9 @@ tunning_results = tunning_predict(algorithm, "", "", steps, series_dict_train, s
 tunning_results["algorithm"] = algorithm
 tunning_results["steps"] = steps
 tunning_results.to_excel(f"../reports/files/{actual_date_and_time}/tunning_{algorithm}_{steps}.xlsx")
+
 #%%
 # Marks the end of the experiment
-print(f"Experiment ")
+end_time = time.process_time()
+print(f"---------------- Experiment finishing with {end_time - start_time} ----------------")
 # %%

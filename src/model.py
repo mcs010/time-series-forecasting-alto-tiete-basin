@@ -25,7 +25,7 @@ param_grid = {
 }
 
 #%%
-def predict(forecaster, features_list, number_of_features, lags, steps, series_dict_train, series_dict, exog_dict, seed):
+def predict(forecaster, features_list, number_of_features, steps, series_dict_train, series_dict, exog_dict, seed):
 
     cv = TimeSeriesFold(
         steps                 = steps,
@@ -58,7 +58,7 @@ def predict(forecaster, features_list, number_of_features, lags, steps, series_d
 
     return metrics_levels, backtest_predictions
 #%%
-def train_predict_model(algorithm, features_list, number_of_features, lags, steps, series_dict, series_dict_train, exog_dict, exog_dict_train, seed):
+def train_predict_model(algorithm:str, features_list, number_of_features, lag, step, series_dict, series_dict_train, exog_dict, exog_dict_train, seed:int):
     """
     Training model
     """
@@ -72,14 +72,14 @@ def train_predict_model(algorithm, features_list, number_of_features, lags, step
 
     forecaster = ForecasterRecursiveMultiSeries(
                     regressor          = regressor, 
-                    lags               = lags, 
+                    lags               = lag, 
                     encoding           = "ordinal", 
                     dropna_from_series = False
                 )
     
     forecaster.fit(series=series_dict_train, exog=exog_dict_train, suppress_warnings=True)
 
-    metrics_levels, backtest_predictions = predict(forecaster, features_list, number_of_features, lags, steps, series_dict_train, series_dict, exog_dict, seed)
+    metrics_levels, backtest_predictions = predict(forecaster, features_list, number_of_features, step, series_dict_train, series_dict, exog_dict, seed)
 
     return metrics_levels, backtest_predictions
 
