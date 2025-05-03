@@ -81,7 +81,7 @@ def train_predict_model(algorithm:str, features_list, number_of_features, lag, s
 
     metrics_levels, backtest_predictions = predict(forecaster, features_list, number_of_features, step, series_dict_train, series_dict, exog_dict, seed)
 
-    return metrics_levels, backtest_predictions
+    return metrics_levels, backtest_predictions, algorithm, features_list, number_of_features, lag, step, seed
 
 #%%
 def tunning_predict(algorithm, features_list, number_of_features, steps, series_dict_train, series_dict, exog_dict, seed, actual_datetime):
