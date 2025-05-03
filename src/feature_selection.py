@@ -17,7 +17,7 @@ def loop_feature_selection(algorithms: list, lags: list, series_dict, exog_dict,
             new_df_row = {"algorithm":algorithm, "lags":lag, "important_features":selected_exog_features}
             df_best_features = pd.concat([df_best_features, pd.DataFrame(new_df_row)], ignore_index=True)
 
-    df_best_features
+    #df_best_features
     df_best_features.to_excel(f"../reports/files/{actual_date_and_time}/best_features.xlsx")
 #%%
 def select_features(algorithm:str, lags:int, series, exog, subsample:float, seed:int):
