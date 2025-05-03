@@ -23,8 +23,10 @@ from feature_selection import loop_feature_selection
 from datetime import date, datetime
 import time
 import pathlib
+from tqdm import tqdm
 
 seed = 10 # sets seed, mainly for feature selection
+seeds = [value for value in range(1, 11)]
 #%%
 # Sets actual date and time values for later use
 actual_datetime = datetime.now()
@@ -152,32 +154,72 @@ create_folder(actual_date_and_time)
 #%%
 # Setting global variables for feature selection, training and prediction
 algorithms = ["LGBM", "ExtraTrees", "RF"]
-lags = [1, 6, 12, 18] #12
-steps = [1, 6, 12, 18] #6
+lags = [1, 6] #12
+steps = [1, 6] #6
 n_features = 9
 subsample = 1.0
 
+BILL02100_list = []
+BILL02500_list = []
+BILL02900_list = []
+BITQ00100_list = []
+EMGU00800_list = []
+EMMI02900_list = []
+GUAR00100_list = []
+GUAR00900_list = []
+RGDE02200_list = []
+RGDE02900_list = []
+average_results_list = []
+weighted_average_results_list = []
+algorithm_results_list = []
+features_list_results = []
+number_of_features_results_list = []
+lag_result_list = []
+step_result_list = []
+seed_result_list = []
 #%%
 # Feature selection process
 loop_feature_selection(algorithms, lags, series_dict, exog_dict, actual_date_and_time, subsample, seed)
 #%%
 # Running training and prediction algorithm
-for algorithm in algorithms:
-    for seed_iteration in range(1, seed+1):    
-        for lag in lags:
-            for step in steps:
-                results, backtest_predictions = train_predict_model(algorithm, "", "", lag, step, series_dict, series_dict_train, exog_dict, exog_dict_train, seed_iteration)
-                df_results = pd.DataFrame(results).set_index("levels").transpose(copy=True)
-                #df_results.set_index("levels").transpose(copy=True)
-                #print(results)
-                df_results["algorithm"] = algorithm
-                df_results["lags"] = lag
-                df_results["steps"] = step
-                df_results["number_features"] = n_features
-                df_results["seed"] = seed_iteration
+step=1
+for algorithm in tqdm(algorithms, "Algorithms"):
+    for lag in tqdm(lags, "Lags"):
+        results, _, algorithm, features_list, number_of_features, lag, step, seed = train_predict_model(algorithm, "", "", lag, step, series_dict, series_dict_train, exog_dict, exog_dict_train, seed)
+        #df_results = pd.DataFrame(results).set_index("levels").transpose(copy=True)
+        df_results_temp = pd.DataFrame(results).transpose(copy=True).reset_index(drop=True).rename_axis(columns=None)
+        column_names = df_results_temp.iloc[0]
+        df_results_temp = df_results_temp[1:]
+        df_results_temp.columns = column_names
+        print(df_results_temp["BILL02100"])
+        
+        BILL02100_list.append(df_results_temp["BILL02100"].values[0])
+        BILL02500_list.append(df_results_temp["BILL02500"].values[0])
+        BILL02900_list.append(df_results_temp["BILL02900"].values[0])
+        BITQ00100_list.append(df_results_temp["BITQ00100"].values[0])
+        EMGU00800_list.append(df_results_temp["EMGU00800"].values[0])
+        EMMI02900_list.append(df_results_temp["EMMI02900"].values[0])
+        GUAR00100_list.append(df_results_temp["GUAR00100"].values[0])
+        GUAR00900_list.append(df_results_temp["GUAR00900"].values[0])
+        RGDE02200_list.append(df_results_temp["RGDE02200"].values[0])
+        RGDE02900_list.append(df_results_temp["RGDE02900"].values[0])
+        average_results_list.append(df_results_temp["average"].values[0])
+        weighted_average_results_list.append(df_results_temp["weighted_average"].values[0])
+        algorithm_results_list.append(algorithm)
+        features_list_results.append(str(features_list))
+        number_of_features_results_list.append(number_of_features)
+        lag_result_list.append(lag)
+        step_result_list.append(step)
+        seed_result_list.append(seed)
 
-                df_results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_scores.xlsx")
-                #results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps[1]}_predictions.xlsx")
+        #results.to_excel(f"../reports/files/{actual_date_and_time}/{algorithm}_{n_features}_{lags}_{steps[1]}_predictions.xlsx")
+df_results = pd.DataFrame(data=zip(BILL02100_list, BILL02500_list, BILL02900_list, BITQ00100_list, EMGU00800_list, EMMI02900_list, GUAR00100_list, GUAR00900_list, RGDE02200_list, RGDE02900_list, average_results_list, weighted_average_results_list, algorithm_results_list, features_list_results, number_of_features_results_list, lag_result_list, step_result_list, seed_result_list), 
+                          columns=["BILL02100", "BILL02500", "BILL02900", "BITQ00100", "EMGU00800", "EMMI02900", 
+                                   "GUAR00100", "GUAR00900", "RGDE02200", "RGDE02900", "average", "weighted_average",
+                                   "algorithm", "features_list", "number_of_features", "lag", "step", "seed"])
+
+print(df_results.head(5))
+df_results.to_excel(f"../reports/files/{actual_date_and_time}/scores.xlsx")
 #%%
 # Hyperparameter Tunning with Grid Search
 #results = tunning_predict("LGBM", "", "", 6, series_dict_train, series_dict, exog_dict, seed)
